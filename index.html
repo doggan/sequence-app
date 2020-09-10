@@ -1,21 +1,79 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>TodoMVC</title>
+    <meta charset="utf-8">
+    <!-- <meta name="viewport" content="width=device-width, initial-scale=1"> -->
+
+    <title>Sequence Diagram Editor</title>
+
     <script src="https://unpkg.com/vue"></script>
-    <link
-      rel="stylesheet"
-      type="text/css"
-      href="https://unpkg.com/todomvc-app-css@2.2.0/index.css"
-    />
+    <script src="https://unpkg.com/buefy/dist/buefy.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/buefy/dist/buefy.min.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.10.2/underscore-min.min.js"></script>
+    <script src="./js/webfont.js"></script>
+    <script src="./js/snap.svg-min.js"></script>
+    <script src="./js/sequence-diagram-min.js"></script>
+
     <style>
-      [v-cloak] {
+      /* [v-cloak] {
         display: none;
+      } */
+
+      .textarea {
+        resize: none !important;
       }
     </style>
   </head>
+
+  <!-- 
+      Shyam TODO:
+      X Add input field
+      X Add buttons
+      X Get hardcoded SVG diagram working with js-diag
+      - Update diagram based on input
+      - save png
+      - language syntax detection (highlight error lines in red)
+      - Fix layout of buttons
+      - Fix horiontal scrolling for large graphs?
+      - 
+   -->
+  
   <body>
-    <section class="todoapp">
+    <section class="app section">
+      <div class="columns">
+        <div class="column is-full">
+          <pre style="display: none;" id="txt">
+            Title: Hamilton Timelines
+            A->B: hello world
+          </pre>
+          <div id="diagram-display"></div>
+        </div>
+      </div>
+      <div class="columns">
+        <div class="column is-two-thirds">
+          <b-field>
+            <b-input type="textarea"></b-input>
+          </b-field>
+        </div>
+        <div class="column">
+          <b-button @click="clickMe">Save As PNG</b-button>
+          <b-button @click="clickMe">Save As PNG</b-button>
+          <b-button @click="clickMe">Save As PNG</b-button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="content has-text-centered">
+        <p>
+          <strong>Bulma</strong> by <a href="https://jgthms.com">Jeremy Thomas</a>. The source code is licensed
+          <a href="http://opensource.org/licenses/mit-license.php">MIT</a>. The website content
+          is licensed <a href="http://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY NC SA 4.0</a>.
+        </p>
+      </div>
+    </footer>
+    <!-- <section class="todoapp">
       <header class="header">
         <h1>todos</h1>
         <input
@@ -93,7 +151,7 @@
       <p>Double-click to edit a todo</p>
       <p>Written by <a href="http://evanyou.me">Evan You</a></p>
       <p>Part of <a href="http://todomvc.com">TodoMVC</a></p>
-    </footer>
+    </footer> -->
 
     <script>
       // Full spec-compliant TodoMVC with localStorage persistence
@@ -152,6 +210,15 @@
           }
         },
 
+        mounted: function() {
+          var diagram = Diagram.parse(
+            document.getElementById('txt').innerText);
+          var options = {
+            theme: 'simple'
+          };
+          diagram.drawSVG('diagram-display', options);
+        },
+
         // computed properties
         // http://vuejs.org/guide/computed.html
         computed: {
@@ -182,6 +249,10 @@
         // methods that implement data logic.
         // note there's no DOM manipulation here at all.
         methods: {
+          clickMe: function() {
+            // TODO:
+          },
+
           addTodo: function() {
             var value = this.newTodo && this.newTodo.trim();
             if (!value) {
@@ -252,7 +323,7 @@
       onHashChange();
 
       // mount
-      app.$mount(".todoapp");
+      app.$mount(".app");
     </script>
   </body>
 </html>
