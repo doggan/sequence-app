@@ -2,26 +2,59 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <!-- <meta name="viewport" content="width=device-width, initial-scale=1"> -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <title>Sequence Diagram Editor</title>
 
+    <!-- VueJS base packages and styling. -->
     <script src="https://unpkg.com/vue"></script>
     <script src="https://unpkg.com/buefy/dist/buefy.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/buefy/dist/buefy.min.css">
 
+    <!-- JS Sequence Diagrams: https://github.com/bramp/js-sequence-diagrams -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.10.2/underscore-min.min.js"></script>
     <script src="./js/webfont.js"></script>
     <script src="./js/snap.svg-min.js"></script>
     <script src="./js/sequence-diagram-min.js"></script>
 
+    <!-- Ace text editor: https://ace.c9.io/ -->
+    <script src="./js/src-min-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+
     <style>
-      /* [v-cloak] {
+      [v-cloak] {
         display: none;
+      }
+
+      /* .textarea {
+        resize: none !important;
       } */
 
-      .textarea {
-        resize: none !important;
+      /* .editor {
+        border-radius: 6px;
+        box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
+        font-family: 'Source Code Pro', monospace;
+        font-size: 14px;
+        font-weight: 400;
+        height: 340px;
+        letter-spacing: normal;
+        line-height: 20px;
+        padding: 10px;
+        tab-size: 4;
+      } */
+
+      /* #editor { 
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+      } */
+
+      #editor {
+        width: 100%;
+        height: 100%;
+        border-radius: 6px;
+        box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
       }
     </style>
   </head>
@@ -31,30 +64,33 @@
       X Add input field
       X Add buttons
       X Get hardcoded SVG diagram working with js-diag
-      - Update diagram based on input
+      X Update diagram based on input
+      X syntax highlighting for grammar?
+      X opt: don't rebuild svg after every text change
+      X text area wrap
+      - highlighting on invalid lines
+
+      - Layout isn't great since input gets push down with svg rendering.
       - save png
-      - language syntax detection (highlight error lines in red)
       - Fix layout of buttons
       - Fix horiontal scrolling for large graphs?
       - 
    -->
   
   <body>
-    <section class="app section">
+    <section id="app" class="section">
       <div class="columns">
         <div class="column is-full">
           <pre style="display: none;" id="txt">
             Title: Hamilton Timelines
             A->B: hello world
           </pre>
-          <div id="diagram-display"></div>
+          <div id="diagram-display" ref="diagram-display"></div>
         </div>
       </div>
       <div class="columns">
         <div class="column is-two-thirds">
-          <b-field>
-            <b-input type="textarea"></b-input>
-          </b-field>
+          <div id="editor"></div>
         </div>
         <div class="column">
           <b-button @click="clickMe">Save As PNG</b-button>
@@ -73,257 +109,75 @@
         </p>
       </div>
     </footer>
-    <!-- <section class="todoapp">
-      <header class="header">
-        <h1>todos</h1>
-        <input
-          class="new-todo"
-          autofocus
-          autocomplete="off"
-          placeholder="What needs to be done?"
-          v-model="newTodo"
-          @keyup.enter="addTodo"
-        />
-      </header>
-      <section class="main" v-show="todos.length" v-cloak>
-        <input
-          id="toggle-all"
-          class="toggle-all"
-          type="checkbox"
-          v-model="allDone"
-        />
-        <label for="toggle-all"></label>
-        <ul class="todo-list">
-          <li
-            v-for="todo in filteredTodos"
-            class="todo"
-            :key="todo.id"
-            :class="{ completed: todo.completed, editing: todo == editedTodo }"
-          >
-            <div class="view">
-              <input class="toggle" type="checkbox" v-model="todo.completed" />
-              <label @dblclick="editTodo(todo)">{{ todo.title }}</label>
-              <button class="destroy" @click="removeTodo(todo)"></button>
-            </div>
-            <input
-              class="edit"
-              type="text"
-              v-model="todo.title"
-              v-todo-focus="todo == editedTodo"
-              @blur="doneEdit(todo)"
-              @keyup.enter="doneEdit(todo)"
-              @keyup.esc="cancelEdit(todo)"
-            />
-          </li>
-        </ul>
-      </section>
-      <footer class="footer" v-show="todos.length" v-cloak>
-        <span class="todo-count">
-          <strong>{{ remaining }}</strong> {{ remaining | pluralize }} left
-        </span>
-        <ul class="filters">
-          <li>
-            <a href="#/all" :class="{ selected: visibility == 'all' }">All</a>
-          </li>
-          <li>
-            <a href="#/active" :class="{ selected: visibility == 'active' }"
-              >Active</a
-            >
-          </li>
-          <li>
-            <a
-              href="#/completed"
-              :class="{ selected: visibility == 'completed' }"
-              >Completed</a
-            >
-          </li>
-        </ul>
-        <button
-          class="clear-completed"
-          @click="removeCompleted"
-          v-show="todos.length > remaining"
-        >
-          Clear completed
-        </button>
-      </footer>
-    </section>
-    <footer class="info">
-      <p>Double-click to edit a todo</p>
-      <p>Written by <a href="http://evanyou.me">Evan You</a></p>
-      <p>Part of <a href="http://todomvc.com">TodoMVC</a></p>
-    </footer> -->
 
     <script>
-      // Full spec-compliant TodoMVC with localStorage persistence
-      // and hash-based routing in ~120 effective lines of JavaScript.
-
-      // localStorage persistence
-      var STORAGE_KEY = "todos-vuejs-2.0";
-      var todoStorage = {
-        fetch: function() {
-          var todos = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-          todos.forEach(function(todo, index) {
-            todo.id = index;
-          });
-          todoStorage.uid = todos.length;
-          return todos;
-        },
-        save: function(todos) {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(todos));
-        }
-      };
-
-      // visibility filters
-      var filters = {
-        all: function(todos) {
-          return todos;
-        },
-        active: function(todos) {
-          return todos.filter(function(todo) {
-            return !todo.completed;
-          });
-        },
-        completed: function(todos) {
-          return todos.filter(function(todo) {
-            return todo.completed;
-          });
-        }
-      };
-
-      // app Vue instance
       var app = new Vue({
-        // app initial state
-        data: {
-          todos: todoStorage.fetch(),
-          newTodo: "",
-          editedTodo: null,
-          visibility: "all"
-        },
+        el: "#app",
 
-        // watch todos change for localStorage persistence
-        watch: {
-          todos: {
-            handler: function(todos) {
-              todoStorage.save(todos);
-            },
-            deep: true
-          }
+        data: {
+          inputText: 'A->B: hello world\nC->D: goodbye world',
         },
 
         mounted: function() {
-          var diagram = Diagram.parse(
-            document.getElementById('txt').innerText);
-          var options = {
-            theme: 'simple'
-          };
-          diagram.drawSVG('diagram-display', options);
+          let editor = ace.edit("editor", {
+            mode: "ace/mode/asciidoc",
+            minLines: 20,
+            maxLines: 20,
+            showPrintMargin: false,
+          });
+          editor.session.on('change', _.debounce(this.refreshDiagram, 100));
+
+          // Set initial focus.
+          editor.focus();
+
+          // Allow access from the rest of the component.
+          Vue.prototype.$editor = editor;
         },
 
-        // computed properties
-        // http://vuejs.org/guide/computed.html
-        computed: {
-          filteredTodos: function() {
-            return filters[this.visibility](this.todos);
-          },
-          remaining: function() {
-            return filters.active(this.todos).length;
-          },
-          allDone: {
-            get: function() {
-              return this.remaining === 0;
-            },
-            set: function(value) {
-              this.todos.forEach(function(todo) {
-                todo.completed = value;
-              });
-            }
-          }
-        },
-
-        filters: {
-          pluralize: function(n) {
-            return n === 1 ? "item" : "items";
-          }
-        },
-
-        // methods that implement data logic.
-        // note there's no DOM manipulation here at all.
         methods: {
+          markSyntaxError: function(lineNumber) {
+            console.log("# mark syntax: " + lineNumber);
+
+            let lines = this.inputText.split('\n');
+            console.log("## line cnt: " + lines.length);
+            if (lineNumber < lines.length) {
+              lines[lineNumber] = '<mark style="background-color:red;">' + lines[lineNumber] + '</mark>';
+              this.inputText = lines.join('');
+            } else {
+              console.error("Invalid line number: " + lineNumber);
+            }
+          },
+
+          refreshDiagram: function() {
+            console.log("## refresh diagram: " + this.$editor.getValue());
+
+            try {
+              let diagram = Diagram.parse(this.$editor.getValue());
+
+              // Clear the old diagram.
+              this.$refs["diagram-display"].html = "";
+              // For some reason we also need to clear this to trigger
+              // a DOM update. Without it, the old diagram won't clear.
+              this.$refs["diagram-display"].innerText = "";
+
+              const options = {
+                theme: 'simple',
+                scale: 1,
+              };
+              diagram.drawSVG("diagram-display", options);
+            } catch(err) {
+              if (err instanceof Diagram.ParseError) {
+                // this.markSyntaxError(err.loc.first_line - 1);
+              }
+              throw err;
+            }
+          },
+
           clickMe: function() {
             // TODO:
           },
-
-          addTodo: function() {
-            var value = this.newTodo && this.newTodo.trim();
-            if (!value) {
-              return;
-            }
-            this.todos.push({
-              id: todoStorage.uid++,
-              title: value,
-              completed: false
-            });
-            this.newTodo = "";
-          },
-
-          removeTodo: function(todo) {
-            this.todos.splice(this.todos.indexOf(todo), 1);
-          },
-
-          editTodo: function(todo) {
-            this.beforeEditCache = todo.title;
-            this.editedTodo = todo;
-          },
-
-          doneEdit: function(todo) {
-            if (!this.editedTodo) {
-              return;
-            }
-            this.editedTodo = null;
-            todo.title = todo.title.trim();
-            if (!todo.title) {
-              this.removeTodo(todo);
-            }
-          },
-
-          cancelEdit: function(todo) {
-            this.editedTodo = null;
-            todo.title = this.beforeEditCache;
-          },
-
-          removeCompleted: function() {
-            this.todos = filters.active(this.todos);
-          }
         },
-
-        // a custom directive to wait for the DOM to be updated
-        // before focusing on the input field.
-        // http://vuejs.org/guide/custom-directive.html
-        directives: {
-          "todo-focus": function(el, binding) {
-            if (binding.value) {
-              el.focus();
-            }
-          }
-        }
       });
-
-      // handle routing
-      function onHashChange() {
-        var visibility = window.location.hash.replace(/#\/?/, "");
-        if (filters[visibility]) {
-          app.visibility = visibility;
-        } else {
-          window.location.hash = "";
-          app.visibility = "all";
-        }
-      }
-
-      window.addEventListener("hashchange", onHashChange);
-      onHashChange();
-
-      // mount
-      app.$mount(".app");
     </script>
   </body>
 </html>
