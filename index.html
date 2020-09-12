@@ -28,6 +28,9 @@
       #editor {
         width: 100%;
         height: 100%;
+      }
+
+      .round-box {
         border-radius: 6px;
         box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
       }
@@ -36,13 +39,28 @@
         padding-top: 10px;
         text-align: center;
       }
+
+      .scrolling-wrapper-flexbox {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        
+        margin: auto;
+        width: 100%;
+      }
+      .flexbox-card {
+        flex: 0 0 auto;
+
+        display: block;
+        margin: auto !important;
+      }
     </style>
   </head>  
   <body>
     <section id="app" class="section">
       <div class="columns is-centered">
         <div class="column is-half">
-          <div id="editor"></div>
+          <div id="editor" class="round-box"></div>
           <div class="button-container">
             <b-button @click="savePng">Save As PNG</b-button>
             <b-button @click="saveText">Save Text</b-button>
@@ -50,10 +68,10 @@
           </div>
         </div>
       </div>
-      <div class="columns">
-        <div class="column">
-          <div id="diagram-display" ref="diagram-display"></div>
-        </div>
+
+      <!-- SVG display. Avoid column layout to support horizontal scrolling. -->
+      <div class="scrolling-wrapper-flexbox round-box">
+        <div id="diagram-display" class="flexbox-card" ref="diagram-display"></div>
       </div>
     </section>
 
