@@ -18,7 +18,7 @@
     <script src="./js/sequence-diagram-min.js"></script>
 
     <!-- Ace text editor: https://ace.c9.io/ -->
-    <script src="./js/src-min-noconflict/ace.js" type="text/javascript" charset="utf-8"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.min.js" integrity="sha512-GoORoNnxst42zE3rYPj4bNBm0Q6ZRXKNH2D9nEmNvVF/z24ywVnijAWVi/09iBiVDQVf3UlZHpzhAJIdd9BXqw==" crossorigin="anonymous"></script>
 
     <style>
       [v-cloak] {
@@ -120,7 +120,6 @@
 
         mounted: function() {
           let editor = ace.edit("editor", {
-            mode: "ace/mode/asciidoc",
             minLines: 20,
             maxLines: 20,
             showPrintMargin: false,
