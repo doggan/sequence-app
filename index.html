@@ -25,77 +25,34 @@
         display: none;
       }
 
-      /* .textarea {
-        resize: none !important;
-      } */
-
-      /* .editor {
-        border-radius: 6px;
-        box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
-        font-family: 'Source Code Pro', monospace;
-        font-size: 14px;
-        font-weight: 400;
-        height: 340px;
-        letter-spacing: normal;
-        line-height: 20px;
-        padding: 10px;
-        tab-size: 4;
-      } */
-
-      /* #editor { 
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left: 0;
-      } */
-
       #editor {
         width: 100%;
         height: 100%;
         border-radius: 6px;
         box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
       }
+
+      .button-container {
+        padding-top: 10px;
+        text-align: center;
+      }
     </style>
-  </head>
-
-  <!-- 
-      Shyam TODO:
-      X Add input field
-      X Add buttons
-      X Get hardcoded SVG diagram working with js-diag
-      X Update diagram based on input
-      X syntax highlighting for grammar?
-      X opt: don't rebuild svg after every text change
-      X text area wrap
-      - highlighting on invalid lines
-
-      - Layout isn't great since input gets push down with svg rendering.
-      - save png
-      - Fix layout of buttons
-      - Fix horiontal scrolling for large graphs?
-      - 
-   -->
-  
+  </head>  
   <body>
     <section id="app" class="section">
-      <div class="columns">
-        <div class="column is-full">
-          <pre style="display: none;" id="txt">
-            Title: Hamilton Timelines
-            A->B: hello world
-          </pre>
-          <div id="diagram-display" ref="diagram-display"></div>
+      <div class="columns is-centered">
+        <div class="column is-half">
+          <div id="editor"></div>
+          <div class="button-container">
+            <b-button @click="savePng">Save As PNG</b-button>
+            <b-button @click="saveText">Save Text</b-button>
+            <b-button @click="loadText">Load Text</b-button>
+          </div>
         </div>
       </div>
       <div class="columns">
-        <div class="column is-two-thirds">
-          <div id="editor"></div>
-        </div>
         <div class="column">
-          <b-button @click="clickMe">Save As PNG</b-button>
-          <b-button @click="clickMe">Save As PNG</b-button>
-          <b-button @click="clickMe">Save As PNG</b-button>
+          <div id="diagram-display" ref="diagram-display"></div>
         </div>
       </div>
     </section>
@@ -115,7 +72,7 @@
         el: "#app",
 
         data: {
-          inputText: 'A->B: hello world\nC->D: goodbye world',
+          
         },
 
         mounted: function() {
@@ -134,24 +91,11 @@
         },
 
         methods: {
-          markSyntaxError: function(lineNumber) {
-            console.log("# mark syntax: " + lineNumber);
-
-            let lines = this.inputText.split('\n');
-            console.log("## line cnt: " + lines.length);
-            if (lineNumber < lines.length) {
-              lines[lineNumber] = '<mark style="background-color:red;">' + lines[lineNumber] + '</mark>';
-              this.inputText = lines.join('');
-            } else {
-              console.error("Invalid line number: " + lineNumber);
-            }
-          },
-
           refreshDiagram: function() {
-            console.log("## refresh diagram: " + this.$editor.getValue());
-
             try {
               let diagram = Diagram.parse(this.$editor.getValue());
+
+              this.$editor.session.clearAnnotations();
 
               // Clear the old diagram.
               this.$refs["diagram-display"].html = "";
@@ -165,14 +109,29 @@
               };
               diagram.drawSVG("diagram-display", options);
             } catch(err) {
+              let annotation = {
+                type: "error",
+                column: 0,
+                row: 0,
+                text: err.message
+              };
+
               if (err instanceof Diagram.ParseError) {
-                // this.markSyntaxError(err.loc.first_line - 1);
+                annotation.row = err.loc.first_line - 1;
+                annotation.column = err.loc.first_line;
               }
-              throw err;
+
+              this.$editor.session.setAnnotations([annotation]);
             }
           },
 
-          clickMe: function() {
+          savePng: function() {
+            // TODO:
+          },
+          saveText: function() {
+            // TODO:
+          },
+          loadText: function() {
             // TODO:
           },
         },
