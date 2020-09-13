@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Sequence Diagram Editor</title>
+    <title>Sequence Diagrams</title>
 
     <!-- VueJS base packages and styling. -->
     <script src="https://unpkg.com/vue"></script>
@@ -17,8 +17,12 @@
     <script src="./js/snap.svg-min.js"></script>
     <script src="./js/sequence-diagram-min.js"></script>
 
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha256-4+XzXVhsDmqanXGHaHvgh1gMQKX40OUvDEBTu8JcmNs=" crossorigin="anonymous"></script>
+
     <!-- Ace text editor: https://ace.c9.io/ -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.min.js" integrity="sha512-GoORoNnxst42zE3rYPj4bNBm0Q6ZRXKNH2D9nEmNvVF/z24ywVnijAWVi/09iBiVDQVf3UlZHpzhAJIdd9BXqw==" crossorigin="anonymous"></script>
+
+    <script type="text/javascript" src="https://unpkg.com/canvg@3.0.4/lib/umd.js"></script>
 
     <style>
       [v-cloak] {
@@ -54,6 +58,25 @@
         display: block;
         margin: auto !important;
       }
+
+      .footer {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+      }
+      .social-icon {
+        height: 32px;
+      }
+      
+      .center {
+        text-align: center;
+      }
+
+      .info-section {
+        padding-top: 15px;
+      }
+      .grammar-img {
+        padding-top: 20px;
+      }
     </style>
   </head>  
   <body>
@@ -62,26 +85,27 @@
         <div class="column is-half">
           <div id="editor" class="round-box"></div>
           <div class="button-container">
-            <b-button @click="savePng">Save As PNG</b-button>
-            <b-button @click="saveText">Save Text</b-button>
-            <b-button @click="loadText">Load Text</b-button>
+            <b-button type="is-primary is-light" @click="savePng">Save As PNG</b-button>
           </div>
         </div>
       </div>
-
       <!-- SVG display. Avoid column layout to support horizontal scrolling. -->
       <div class="scrolling-wrapper-flexbox round-box">
-        <div id="diagram-display" class="flexbox-card" ref="diagram-display"></div>
+        <div id="diagram-display" class="flexbox-card"></div>
+      </div>
+      <div class="columns is-centered info-section">
+        <div class="column is-two-thirds center">
+          <p>A web app for turning text into UML sequence diagrams.</p>
+          <p>Follow the <strong>grammar syntax</strong> below, or <a href="#" v-on:click="loadTestData">load a sample diagram</a> to get started.</p>
+          <p><img class="grammar-img" src="./img/grammar.png"></p>
+        </div>
       </div>
     </section>
 
     <footer class="footer">
       <div class="content has-text-centered">
-        <p>
-          <strong>Bulma</strong> by <a href="https://jgthms.com">Jeremy Thomas</a>. The source code is licensed
-          <a href="http://opensource.org/licenses/mit-license.php">MIT</a>. The website content
-          is licensed <a href="http://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY NC SA 4.0</a>.
-        </p>
+        <p><small>Built by Shyam Guthikonda in 2020 <strong>|</strong> Based off of <strong><a href="https://github.com/bramp/js-sequence-diagrams">js-sequence-diagrams</a></strong></small></p>
+        <p><a href="https://github.com/doggan/sequence-app"><img class="social-icon" src="./img/GitHub-Mark-64px.png"></a></p>
       </div>
     </footer>
 
@@ -90,7 +114,7 @@
         el: "#app",
 
         data: {
-          
+          hasContents: false,
         },
 
         mounted: function() {
@@ -109,6 +133,35 @@
         },
 
         methods: {
+          loadTestData: function() {
+            let graph =
+`Title: Hamilton Timeline
+participant	1756
+participant	1757
+participant 1778
+participant	1781
+participant	1782
+participant	1783
+participant	1787
+participant	1804
+participant	1836
+
+1757->1804: Alexander Hamilton
+1756->1836: Aaron Burr
+
+Note over 1778: Battle of Monmouth
+Note over 1781: Battle of Yorktown
+Note over 1783: Treaty of Paris
+Note over 1787: The Constitutional\\nConvention`;
+
+            this.$editor.setValue(graph, 1);
+            this.$editor.focus();
+          },
+
+          isEditorEmpty: function() {
+            return this.$editor.getValue().trim().length === 0;
+          },
+
           refreshDiagram: function() {
             try {
               let diagram = Diagram.parse(this.$editor.getValue());
@@ -116,16 +169,15 @@
               this.$editor.session.clearAnnotations();
 
               // Clear the old diagram.
-              this.$refs["diagram-display"].html = "";
-              // For some reason we also need to clear this to trigger
-              // a DOM update. Without it, the old diagram won't clear.
-              this.$refs["diagram-display"].innerText = "";
+              $("#diagram-display").empty();
 
-              const options = {
-                theme: 'simple',
-                scale: 1,
-              };
-              diagram.drawSVG("diagram-display", options);
+              if (!this.isEditorEmpty()){ 
+                const options = {
+                  theme: 'simple',
+                  scale: 1,
+                };
+                diagram.drawSVG("diagram-display", options);
+              }
             } catch(err) {
               let annotation = {
                 type: "error",
@@ -141,16 +193,73 @@
 
               this.$editor.session.setAnnotations([annotation]);
             }
+
+            this.hasContents = $("svg").length
+          },
+
+          generateLink: function (fileName, data) {
+            var link = document.createElement('a');
+            link.download = fileName;
+            link.href = data;
+            return link;
           },
 
           savePng: function() {
-            // TODO:
-          },
-          saveText: function() {
-            // TODO:
-          },
-          loadText: function() {
-            // TODO:
+            console.log("## save png");
+            
+            // var svg = diagram_div.find('svg')[0];
+            var svg = $("#diagram-display").find('svg')[0];
+            var width = parseInt(svg.width.baseVal.value);
+            var height = parseInt(svg.height.baseVal.value);
+            var data = this.$editor.getValue();
+            var xml = '<?xml version="1.0" encoding="utf-8" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd"><svg xmlns="http://www.w3.org/2000/svg" width="' + width + '" height="' + height + '" xmlns:xlink="http://www.w3.org/1999/xlink"><source><![CDATA[' + data + ']]></source>' + svg.innerHTML + '</svg>';
+
+            console.log("### SVG XML:");
+            console.log(xml);
+
+            // var link = this.generateLink("diagram.svg", "data:image/svg+xml," + encodeURIComponent(xml));
+            // link.click();
+
+            // var a = $(this);
+            // a.attr("download", "diagram.svg"); // TODO I could put title here
+            // a.attr("href", "data:image/svg+xml," + encodeURIComponent(xml));
+
+
+
+            var canvas = document.createElement('canvas'); // Create a Canvas element.
+            var ctx = canvas.getContext('2d'); // For Canvas returns 2D graphic.
+            var svgData = svg;
+            // // var svgData = $("#diagram-display").html(); // Get SVG element as HTML code.
+            // var svgData = $("svg").html();
+            // console.log(svgData);
+            canvg.Canvg.fromString(ctx, xml); // Render SVG on Canvas.
+            let img = canvas.toDataURL("image/png");
+
+            this.generateLink('SVG2PNG-01.png', img).click();
+
+            // var svgNode = $("#diagram-display").html();
+            // saveSvgAsPng(svgNode, "diagramxyz.png");
+
+            // callback(canvas); // Execute callback function.
+
+            
+    // const canvas = document.querySelector('canvas');
+    // const ctx = canvas.getContext('2d');
+    
+    // v = canvg.Canvg.fromString(ctx, '<svg width="600" height="600"><text x="50" y="50">Hello World!</text></svg>');
+
+    // // Start SVG rendering with animations and mouse handling.
+    // v.start();
+
+            // // the canvg call that takes the svg xml and converts it to a canvas
+            // canvg.Canvg.fromString
+            // canvg('canvas', $("#diagram-display").html());
+
+            // // the canvas calls to output a png
+            // var canvas = document.getElementById("canvas");
+            // var img = canvas.toDataURL("image/png");
+            // console.log(img);
+            // do what you want with the base64, write to screen, post to server, etc...
           },
         },
       });
