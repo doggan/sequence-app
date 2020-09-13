@@ -17,11 +17,13 @@
     <script src="./js/snap.svg-min.js"></script>
     <script src="./js/sequence-diagram-min.js"></script>
 
+    <!-- JQuery utilities -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha256-4+XzXVhsDmqanXGHaHvgh1gMQKX40OUvDEBTu8JcmNs=" crossorigin="anonymous"></script>
 
     <!-- Ace text editor: https://ace.c9.io/ -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.min.js" integrity="sha512-GoORoNnxst42zE3rYPj4bNBm0Q6ZRXKNH2D9nEmNvVF/z24ywVnijAWVi/09iBiVDQVf3UlZHpzhAJIdd9BXqw==" crossorigin="anonymous"></script>
 
+    <!-- SVG -> PNG blitting -->
     <script type="text/javascript" src="https://unpkg.com/canvg@3.0.4/lib/umd.js"></script>
 
     <style>
@@ -85,7 +87,7 @@
         <div class="column is-half">
           <div id="editor" class="round-box"></div>
           <div class="button-container">
-            <b-button type="is-primary is-light" @click="savePng">Save As PNG</b-button>
+            <b-button type="is-primary is-light" @click="savePng" :disabled='!hasContents'>Save As PNG</b-button>
           </div>
         </div>
       </div>
@@ -163,12 +165,13 @@ Note over 1787: The Constitutional\\nConvention`;
           },
 
           refreshDiagram: function() {
+            let didDraw = false;
+
             try {
               let diagram = Diagram.parse(this.$editor.getValue());
 
+              // Clear the old diagram and editor state.
               this.$editor.session.clearAnnotations();
-
-              // Clear the old diagram.
               $("#diagram-display").empty();
 
               if (!this.isEditorEmpty()){ 
@@ -177,6 +180,7 @@ Note over 1787: The Constitutional\\nConvention`;
                   scale: 1,
                 };
                 diagram.drawSVG("diagram-display", options);
+                didDraw = true;
               }
             } catch(err) {
               let annotation = {
@@ -194,7 +198,7 @@ Note over 1787: The Constitutional\\nConvention`;
               this.$editor.session.setAnnotations([annotation]);
             }
 
-            this.hasContents = $("svg").length
+            this.hasContents = didDraw;
           },
 
           generateLink: function (fileName, data) {
@@ -205,61 +209,20 @@ Note over 1787: The Constitutional\\nConvention`;
           },
 
           savePng: function() {
-            console.log("## save png");
+            let svgData = $("#diagram-display").html();
+            let canvas = document.createElement('canvas');
+            let ctx = canvas.getContext('2d');
+            let v = canvg.Canvg.fromString(ctx, svgData);
+            v.start(); // force render
+
+            // Add a background color or else it will be transparent.
+            ctx.globalCompositeOperation = 'destination-over' // new blits behind alrdy painted pixels
+            ctx.fillStyle = "#ffffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // var svg = diagram_div.find('svg')[0];
-            var svg = $("#diagram-display").find('svg')[0];
-            var width = parseInt(svg.width.baseVal.value);
-            var height = parseInt(svg.height.baseVal.value);
-            var data = this.$editor.getValue();
-            var xml = '<?xml version="1.0" encoding="utf-8" standalone="no"?><!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd"><svg xmlns="http://www.w3.org/2000/svg" width="' + width + '" height="' + height + '" xmlns:xlink="http://www.w3.org/1999/xlink"><source><![CDATA[' + data + ']]></source>' + svg.innerHTML + '</svg>';
-
-            console.log("### SVG XML:");
-            console.log(xml);
-
-            // var link = this.generateLink("diagram.svg", "data:image/svg+xml," + encodeURIComponent(xml));
-            // link.click();
-
-            // var a = $(this);
-            // a.attr("download", "diagram.svg"); // TODO I could put title here
-            // a.attr("href", "data:image/svg+xml," + encodeURIComponent(xml));
-
-
-
-            var canvas = document.createElement('canvas'); // Create a Canvas element.
-            var ctx = canvas.getContext('2d'); // For Canvas returns 2D graphic.
-            var svgData = svg;
-            // // var svgData = $("#diagram-display").html(); // Get SVG element as HTML code.
-            // var svgData = $("svg").html();
-            // console.log(svgData);
-            canvg.Canvg.fromString(ctx, xml); // Render SVG on Canvas.
             let img = canvas.toDataURL("image/png");
 
-            this.generateLink('SVG2PNG-01.png', img).click();
-
-            // var svgNode = $("#diagram-display").html();
-            // saveSvgAsPng(svgNode, "diagramxyz.png");
-
-            // callback(canvas); // Execute callback function.
-
-            
-    // const canvas = document.querySelector('canvas');
-    // const ctx = canvas.getContext('2d');
-    
-    // v = canvg.Canvg.fromString(ctx, '<svg width="600" height="600"><text x="50" y="50">Hello World!</text></svg>');
-
-    // // Start SVG rendering with animations and mouse handling.
-    // v.start();
-
-            // // the canvg call that takes the svg xml and converts it to a canvas
-            // canvg.Canvg.fromString
-            // canvg('canvas', $("#diagram-display").html());
-
-            // // the canvas calls to output a png
-            // var canvas = document.getElementById("canvas");
-            // var img = canvas.toDataURL("image/png");
-            // console.log(img);
-            // do what you want with the base64, write to screen, post to server, etc...
+            this.generateLink('diagram.png', img).click();
           },
         },
       });
