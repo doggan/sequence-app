@@ -73,8 +73,9 @@
         text-align: center;
       }
 
-      .info-section {
-        padding-top: 15px;
+      /* Dynamically add padding depending on whether SVG is visible or not */
+      .info-section-padding {
+        padding-top: 30px;
       }
       .grammar-img {
         padding-top: 20px;
@@ -95,10 +96,10 @@
       <div class="scrolling-wrapper-flexbox round-box">
         <div id="diagram-display" class="flexbox-card"></div>
       </div>
-      <div class="columns is-centered info-section">
+      <div class="columns is-centered" v-bind:class="[hasContents ? 'info-section-padding' : '']">
         <div class="column is-two-thirds center">
           <p>A web app for turning text into sequence diagrams.</p>
-          <p>Follow the <strong>grammar syntax</strong> below, or load a sample diagram to get started.</p>
+          <p>Follow the <strong>grammar syntax</strong> below, or load a sample to get started.</p>
           <p><a href="#" v-on:click="loadSample(0)">Sample 1</a> | <a href="#" v-on:click="loadSample(1)">Sample 2</a> | <a href="#" v-on:click="loadSample(2)">Sample 3</a></p>
           <p><img class="grammar-img" src="./img/grammar.png"></p>
         </div>
@@ -137,8 +138,6 @@
 
         methods: {
           loadSample: function(val) {
-            console.log(val);
-
             let samples = [
 `Client->Server: Request data
 Server->>Server: Check cache
@@ -189,14 +188,13 @@ Note over 1787: The Constitutional\\nConvention
           },
 
           refreshDiagram: function() {
-            let didDraw = false;
-
             try {
               let diagram = Diagram.parse(this.$editor.getValue());
 
               // Clear the old diagram and editor state.
               this.$editor.session.clearAnnotations();
               $("#diagram-display").empty();
+              this.hasContents = false;
 
               if (!this.isEditorEmpty()){ 
                 const options = {
@@ -204,7 +202,7 @@ Note over 1787: The Constitutional\\nConvention
                   scale: 1,
                 };
                 diagram.drawSVG("diagram-display", options);
-                didDraw = true;
+                this.hasContents = true;
               }
             } catch(err) {
               let annotation = {
@@ -221,8 +219,6 @@ Note over 1787: The Constitutional\\nConvention
 
               this.$editor.session.setAnnotations([annotation]);
             }
-
-            this.hasContents = didDraw;
           },
 
           generateLink: function (fileName, data) {
