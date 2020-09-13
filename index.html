@@ -10,6 +10,7 @@
     <script src="https://unpkg.com/vue"></script>
     <script src="https://unpkg.com/buefy/dist/buefy.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/buefy/dist/buefy.min.css">
+    <link rel="stylesheet" href="https://cdn.materialdesignicons.com/5.3.45/css/materialdesignicons.min.css">
 
     <!-- JS Sequence Diagrams: https://github.com/bramp/js-sequence-diagrams -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.10.2/underscore-min.min.js"></script>
@@ -88,7 +89,35 @@
         <div class="column is-half">
           <div id="editor" class="round-box"></div>
           <div class="button-container">
-            <b-button type="is-primary is-light" @click="savePng" :disabled='!hasContents'>Save As PNG</b-button>
+            <b-button type="is-primary" @click="savePng" :disabled='!hasContents'>Save As PNG</b-button>
+            <b-tooltip label="Save diagram source text to a file." position="is-bottom">
+              <b-button type="is-primary is-light" @click="saveSource" :disabled='!hasContents'>Save Source</b-button>
+            </b-tooltip>
+            <b-tooltip label="Load diagram source text from a file." position="is-bottom">
+              <b-button type="is-primary is-light" @click="isUploadModalActive = true">Load Source</b-button>
+            </b-tooltip>
+
+            <!-- Upload dialog layout -->
+            <b-modal v-model="isUploadModalActive" :width="320" has-modal-card
+              trap-focus aria-role="dialog" aria-modal>
+              <div class="card">
+                <div class="card-content">
+                  <section>
+                    <b-field>
+                      <b-upload v-model="uploadedFile" drag-drop>
+                        <section class="section">
+                          <div class="content has-text-centered">
+                            <p><b-icon icon="upload" size="is-large"></b-icon></p>
+                            <p>Drop your diagram source file here or click to upload.</p>
+                          </div>
+                        </section>
+                      </b-upload>
+                    </b-field>
+                    <b-button @click="isUploadModalActive = false">Cancel</b-button>
+                  </section>
+                </div>
+              </div>
+            </b-modal>
           </div>
         </div>
       </div>
@@ -119,6 +148,8 @@
 
         data: {
           hasContents: false,
+          isUploadModalActive: false,
+          uploadedFile: null,
         },
 
         mounted: function() {
@@ -134,6 +165,26 @@
 
           // Allow access from the rest of the component.
           Vue.prototype.$editor = editor;
+        },
+
+        watch: {
+          uploadedFile: {
+            handler() {
+              if (this.uploadedFile) {
+                if (this.uploadedFile.type === "text/plain") {
+                  this.isUploadModalActive = false;
+                  this.loadSource(this.uploadedFile);
+                } else {
+                  console.error("Invalid file type: " + this.uploadedFile.type);
+                  this.$buefy.toast.open({
+                    message: 'Invalid file type: [' + this.uploadedFile.type + ']: ' +
+                      this.uploadedFile.name,
+                    type: 'is-danger'
+                  });
+                }
+              }
+            }
+          }
         },
 
         methods: {
@@ -183,13 +234,17 @@ Note over 1787: The Constitutional\\nConvention
             this.$editor.focus();
           },
 
+          getEditorContents: function() {
+            return this.$editor.getValue();
+          },
+
           isEditorEmpty: function() {
-            return this.$editor.getValue().trim().length === 0;
+            return this.getEditorContents().trim().length === 0;
           },
 
           refreshDiagram: function() {
             try {
-              let diagram = Diagram.parse(this.$editor.getValue());
+              let diagram = Diagram.parse(this.getEditorContents());
 
               // Clear the old diagram and editor state.
               this.$editor.session.clearAnnotations();
@@ -243,6 +298,30 @@ Note over 1787: The Constitutional\\nConvention
             let img = canvas.toDataURL("image/png");
 
             this.generateLink('diagram.png', img).click();
+          },
+
+          saveSource: function() {
+            let contents = this.getEditorContents();
+            let uriContent = "data:application/octet-stream," + encodeURIComponent(contents);
+
+            this.generateLink('diagram_source.txt', uriContent).click();
+          },
+
+          loadSource: function(file) {
+            console.log("Loading source file: " + file.name)
+            var parent = this;
+            var reader = new FileReader();
+            reader.onload = (function(theFile) {
+              return function(e) {
+                parent.$editor.setValue(e.target.result, 1);
+                parent.$editor.focus();
+                parent.$buefy.toast.open({
+                    message: 'Loaded source file: ' + file.name,
+                    type: 'is-success'
+                });
+              };
+            })(file);
+            reader.readAsText(file);
           },
         },
       });
