@@ -81,6 +81,10 @@
       .grammar-img {
         padding-top: 20px;
       }
+
+      .load-buttons {
+        padding-top: 5px;
+      }
     </style>
   </head>  
   <body>
@@ -90,12 +94,14 @@
           <div id="editor" class="round-box"></div>
           <div class="button-container">
             <b-button type="is-primary" @click="savePng" :disabled='!hasContents'>Save As PNG</b-button>
-            <b-tooltip label="Save diagram source text to a file." position="is-bottom">
-              <b-button type="is-primary is-light" @click="saveSource" :disabled='!hasContents'>Save Source</b-button>
-            </b-tooltip>
-            <b-tooltip label="Load diagram source text from a file." position="is-bottom">
-              <b-button type="is-primary is-light" @click="isUploadModalActive = true">Load Source</b-button>
-            </b-tooltip>
+            <p class="load-buttons">
+              <b-tooltip label="Save diagram source text to a file." position="is-bottom">
+                <b-button type="is-primary is-light" @click="saveSource" :disabled='!hasContents'>Save Source</b-button>
+              </b-tooltip>
+              <b-tooltip label="Load diagram source text from a file." position="is-bottom">
+                <b-button type="is-primary is-light" @click="isUploadModalActive = true">Load Source</b-button>
+              </b-tooltip>
+            </p>
 
             <!-- Upload dialog layout -->
             <b-modal v-model="isUploadModalActive" :width="320" has-modal-card
