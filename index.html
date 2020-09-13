@@ -97,8 +97,9 @@
       </div>
       <div class="columns is-centered info-section">
         <div class="column is-two-thirds center">
-          <p>A web app for turning text into UML sequence diagrams.</p>
-          <p>Follow the <strong>grammar syntax</strong> below, or <a href="#" v-on:click="loadTestData">load a sample diagram</a> to get started.</p>
+          <p>A web app for turning text into sequence diagrams.</p>
+          <p>Follow the <strong>grammar syntax</strong> below, or load a sample diagram to get started.</p>
+          <p><a href="#" v-on:click="loadSample(0)">Sample 1</a> | <a href="#" v-on:click="loadSample(1)">Sample 2</a> | <a href="#" v-on:click="loadSample(2)">Sample 3</a></p>
           <p><img class="grammar-img" src="./img/grammar.png"></p>
         </div>
       </div>
@@ -135,28 +136,51 @@
         },
 
         methods: {
-          loadTestData: function() {
-            let graph =
+          loadSample: function(val) {
+            console.log(val);
+
+            let samples = [
+`Client->Server: Request data
+Server->>Server: Check cache
+Server->Database: Fetch data if not cached
+Database-->Server: 
+Server->Client: Return data
+`,
+
+`participant Oct 2020 as Oct
+participant Nov 2020 as Nov
+participant Dec 2020 as Dec
+
+Title: Q4 Team Planning
+Oct->Nov: Project A
+Oct->Dec: Project B
+Note over Nov: Worldwide\\nConference
+Oct->Nov: Project C
+Nov->Nov: Project D
+Nov->Dec: Project E
+`,
+
 `Title: Hamilton Timeline
-participant	1756
-participant	1757
+participant 1756
+participant 1757
+participant 1775
 participant 1778
-participant	1781
-participant	1782
-participant	1783
-participant	1787
-participant	1804
-participant	1836
+participant 1781
+participant 1783
+participant 1787
+participant 1804
+participant 1836
 
 1757->1804: Alexander Hamilton
 1756->1836: Aaron Burr
-
 Note over 1778: Battle of Monmouth
 Note over 1781: Battle of Yorktown
-Note over 1783: Treaty of Paris
-Note over 1787: The Constitutional\\nConvention`;
+Note over 1787: The Constitutional\\nConvention
+1775-->>1783: American Revolution
+`
+          ];
 
-            this.$editor.setValue(graph, 1);
+            this.$editor.setValue(samples[val], 1);
             this.$editor.focus();
           },
 
