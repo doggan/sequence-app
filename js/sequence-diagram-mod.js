@@ -1136,7 +1136,12 @@ _.extend(BaseTheme.prototype, {
   drawTitle: function() {
     var title = this.title_;
     if (title) {
-      this.drawTextBox(title, title.message, TITLE_MARGIN, TITLE_PADDING, this.font_, ALIGN_LEFT);
+      // TODO(shyam): remove box border
+      var x = title.x + TITLE_MARGIN + TITLE_PADDING;
+      var y = title.y + TITLE_MARGIN + TITLE_PADDING;
+      var w = title.width - 2 * TITLE_MARGIN;
+      var h = title.height - 2 * TITLE_MARGIN;
+      this.drawText(x, y, title.message, this.font_, ALIGN_LEFT);
     }
   },
 
